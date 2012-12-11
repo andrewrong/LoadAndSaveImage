@@ -1,12 +1,11 @@
 #include "myImageStruct.h"
-#include "cv.h"
-#include <string>
+#include "opencv/highgui.h"
 #include <iostream>
 #include <assert.h>
 
 using namespace std;
 
-void LoadImage(s_Image& myImage,const string filename)
+void MyLoadImage(s_Image& myImage,const string& filename)
 {
     IplImage *inputImage;
 
@@ -45,7 +44,7 @@ void LoadImage(s_Image& myImage,const string filename)
     myImage.width = inputImage->width;
     myImage.height = inputImage->height;
     assert(myImage.width >= 0 && myImage.height >= 0);
-
+    
     myImage.storeBuf = new UCHAR[myImage.width * myImage.height * myImage.channelNum]();
     assert(myImage.storeBuf != NULL);
     
@@ -54,7 +53,7 @@ void LoadImage(s_Image& myImage,const string filename)
 
     for(int i = 0; i < myImage.height; i++)
     {
-	myImage.data[i] = myImage.storeBuf[i * myImage.width * myImage.channelNum];
+	myImage.data[i] = &myImage.storeBuf[i * myImage.width * myImage.channelNum];
 	UCHAR* pimg = reinterpret_cast<UCHAR*>(inputImage->imageData + inputImage->widthStep * i);
 	for(int j = 0; j < myImage.width * myImage.channelNum; j++)
 	{
@@ -63,4 +62,24 @@ void LoadImage(s_Image& myImage,const string filename)
     }
 
     cvReleaseImage(&inputImage);
+}
+
+void MySaveImage(const s_Image& image,const string& filename)
+{
+    IplImage* img;
+
+    img = cvCreateImage(cvSize(image.width,image.height),IPL_DEPTH_8U,image.channelNum);
+    assert(img != NULL);
+
+    for(int i = 0; i < image.height; i++)
+    {
+	UCHAR* pimg = reinterpret_cast<UCHAR*>(img->imageData + img->widthStep * i);
+
+	for(int j = 0; j < image.width * image.channelNum;j++)
+	{
+	    pimg[j] = image.data[i][j];
+	}
+    }
+    cvSaveImage(filename.c_str(),img);
+    cvReleaseImage(&img);
 }
